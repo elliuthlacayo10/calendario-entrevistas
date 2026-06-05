@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendario Entrevistas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0d1f3c;
+    --teal: #00838f;
+    --teal-light: #e0f5f7;
+    --gold: #c8a84b;
+    --gold-light: #fdf6e3;
+    --green: #1e8449;
+    --green-light: #eafaf1;
+    --gray-100: #f7f8fa;
+    --gray-200: #eaecf0;
+    --gray-400: #9ca3af;
+    --gray-600: #4b5563;
+    --white: #ffffff;
+    --shadow: 0 4px 24px rgba(13,31,60,0.10);
+    --shadow-sm: 0 2px 8px rgba(13,31,60,0.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--gray-100); color: var(--navy); min-height: 100vh; }
+
+  /* HEADER */
+  header { background: var(--navy); padding: 28px 48px 22px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  .header-left h1 { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 2.2rem; color: var(--white); line-height: 1.1; }
+  .header-left h1 span { color: var(--gold); }
+  .header-left p { margin-top: 4px; font-size: 0.78rem; font-weight: 300; color: rgba(255,255,255,0.5); letter-spacing: 0.08em; text-transform: uppercase; }
+  .header-right { display: flex; gap: 10px; flex-wrap: wrap; }
+  .tag { padding: 5px 14px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.75); }
+
+  /* TOOLBAR */
+  .toolbar { background: var(--white); padding: 12px 48px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--gray-200); box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; }
+  .toolbar-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--gray-400); }
+  .filter-btn { padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--gray-200); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 500; color: var(--gray-600); cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+  .filter-btn:hover, .filter-btn.active { background: var(--navy); border-color: var(--navy); color: var(--white); }
+  .add-btn { margin-left: auto; padding: 8px 18px; border-radius: 8px; border: none; background: var(--teal); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.18s; white-space: nowrap; }
+  .add-btn:hover { background: #006771; }
+  .sep { width: 1px; height: 24px; background: var(--gray-200); margin: 0 4px; }
+
+  /* VIEW TOGGLE */
+  .view-toggle { display: flex; gap: 0; border: 1.5px solid var(--gray-200); border-radius: 8px; overflow: hidden; }
+  .view-btn { padding: 6px 14px; border: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 500; color: var(--gray-600); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
+  .view-btn.active { background: var(--navy); color: var(--white); }
+
+  /* MONTH TABS */
+  .month-tabs { background: var(--white); border-bottom: 2px solid var(--gray-200); padding: 0 48px; display: flex; gap: 0; overflow-x: auto; }
+  .month-tab { padding: 12px 20px; font-size: 0.82rem; font-weight: 600; color: var(--gray-400); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; white-space: nowrap; text-transform: capitalize; }
+  .month-tab:hover { color: var(--navy); }
+  .month-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+  /* MAIN */
+  .main { padding: 32px 48px 60px; }
+
+  /* TABLE */
+  .section-header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; }
+  .section-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; color: var(--navy); text-transform: capitalize; }
+  .section-count { font-size: 0.78rem; color: var(--gray-400); }
+  .table-wrap { background: var(--white); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  thead th { background: var(--navy); color: rgba(255,255,255,0.75); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; padding: 12px 14px; text-align: left; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--gray-200); transition: background 0.12s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f0f7f8; }
+  td { padding: 13px 14px; font-size: 0.82rem; color: var(--gray-600); vertical-align: top; line-height: 1.45; }
+  td strong { display: block; color: var(--navy); font-weight: 600; font-size: 0.84rem; }
+  td .sub { font-size: 0.74rem; color: var(--gray-400); margin-top: 1px; display: block; }
+
+  /* BADGES */
+  .medio-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 7px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+  .medio-badge .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .medio-tv { background: #eef2ff; color: #3730a3; } .medio-tv .dot { background: #6366f1; }
+  .medio-radio { background: var(--gold-light); color: #7a5a00; } .medio-radio .dot { background: var(--gold); }
+  .medio-periodico-digital { background: #f0fdf4; color: #166534; } .medio-periodico-digital .dot { background: #22c55e; }
+  .medio-periodico-impreso { background: var(--teal-light); color: #005f66; } .medio-periodico-impreso .dot { background: var(--teal); }
+  .medio-revista { background: #fdf2f8; color: #831843; } .medio-revista .dot { background: #ec4899; }
+
+  .tipo-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.71rem; font-weight: 600; }
+  .tipo-presencial { background: var(--green-light); color: var(--green); }
+  .tipo-llamada { background: #eff6ff; color: #1d4ed8; }
+  .tipo-videollamada { background: #fdf4ff; color: #7e22ce; }
+
+  .status { display: inline-block; padding: 4px 9px; border-radius: 6px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.4; text-align: center; white-space: nowrap; }
+  .status-pedido-sin-confirmar { background: #ff00ff; color: #fff; }
+  .status-confirmado           { background: #00ffff; color: #005f66; }
+  .status-no-se-hizo           { background: #ff0000; color: #fff; }
+  .status-reagendado           { background: #9900ff; color: #fff; }
+  .status-por-realizarse       { background: #ff9900; color: #fff; }
+  .status-falta-testigo        { background: #ffee00; color: #665500; }
+  .status-con-testigo          { background: #00ff00; color: #1a5c00; }
+
+  .hosp-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .hosp-betania  { background: #fff0f0; color: #9b1c1c; }
+  .hosp-upaep    { background: #f5f3ff; color: #4c1d95; }
+  .hosp-cio      { background: #fff7ed; color: #9a3412; }
+
+  .preguntas-list { list-style: none; padding: 0; }
+  .preguntas-list li { display: flex; gap: 5px; margin-bottom: 3px; font-size: 0.78rem; color: var(--gray-600); line-height: 1.4; }
+  .preguntas-list li::before { content: "▸"; color: var(--teal); flex-shrink: 0; }
+
+  /* ── CALENDAR VIEW ── */
+  .cal-wrap { background: var(--white); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+  .cal-header { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--navy); }
+  .cal-dow { padding: 10px 0; text-align: center; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .cal-cell { min-height: 110px; border-right: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); padding: 8px 6px 6px; position: relative; }
+  .cal-cell:nth-child(7n) { border-right: none; }
+  .cal-cell.empty { background: #fafafa; }
+  .cal-cell.today { background: #f0f9fa; }
+  .cal-day-num { font-size: 0.78rem; font-weight: 600; color: var(--gray-400); margin-bottom: 5px; display: block; }
+  .cal-cell.today .cal-day-num { background: var(--teal); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; }
+  .cal-event { border-radius: 5px; padding: 3px 6px; margin-bottom: 3px; cursor: pointer; transition: opacity 0.15s; font-size: 0.7rem; font-weight: 600; line-height: 1.3; }
+  .cal-event:hover { opacity: 0.8; }
+  .cal-event-medio { color: var(--navy); opacity: 0.9; }
+  .cal-event-hora { font-weight: 400; opacity: 0.75; }
+
+  /* event colors by tipo medio */
+  .ev-tv { background: #dde3ff; color: #312e81; }
+  .ev-radio { background: #fef3c7; color: #78350f; }
+  .ev-periodico-digital { background: #dcfce7; color: #14532d; }
+  .ev-periodico-impreso { background: #cffafe; color: #164e63; }
+  .ev-revista { background: #fce7f3; color: #831843; }
+
+  /* DETAIL POPUP */
+  .detail-overlay { display: none; position: fixed; inset: 0; background: rgba(13,31,60,0.45); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
+  .detail-overlay.open { display: flex; }
+  .detail-card { background: var(--white); border-radius: 16px; width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(13,31,60,0.25); animation: modalIn 0.2s ease; }
+  .detail-top { padding: 22px 24px 16px; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .detail-top h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 700; color: var(--navy); }
+  .detail-close { background: none; border: none; font-size: 1.3rem; color: var(--gray-400); cursor: pointer; flex-shrink: 0; }
+  .detail-body { padding: 18px 24px 24px; display: flex; flex-direction: column; gap: 12px; }
+  .detail-row { display: flex; gap: 10px; align-items: flex-start; font-size: 0.83rem; }
+  .detail-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray-400); min-width: 90px; padding-top: 2px; }
+  .detail-val { color: var(--navy); flex: 1; line-height: 1.5; }
+  .detail-actions { padding: 0 24px 20px; display: flex; gap: 10px; }
+  .detail-edit-btn { padding: 8px 20px; border-radius: 8px; border: none; background: var(--teal); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+
+  /* MODAL */
+  @keyframes modalIn { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(13,31,60,0.45); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border-radius: 16px; width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(13,31,60,0.25); animation: modalIn 0.2s ease; }
+  .modal-header { padding: 22px 26px 0; display: flex; align-items: center; justify-content: space-between; }
+  .modal-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.45rem; font-weight: 700; color: var(--navy); }
+  .modal-close { background: none; border: none; cursor: pointer; font-size: 1.3rem; color: var(--gray-400); }
+  .modal-body { padding: 18px 26px 26px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+  .form-full { grid-column: 1 / -1; }
+  .form-group label { display: block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray-400); margin-bottom: 4px; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 11px; border: 1.5px solid var(--gray-200); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.83rem; color: var(--navy); background: var(--white); outline: none; transition: border-color 0.15s; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--teal); }
+  .form-group textarea { resize: vertical; min-height: 75px; }
+  .modal-footer { padding: 0 26px 22px; display: flex; justify-content: flex-end; gap: 10px; }
+  .btn-cancel { padding: 8px 18px; border-radius: 8px; border: 1.5px solid var(--gray-200); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.83rem; cursor: pointer; color: var(--gray-600); }
+  .btn-save { padding: 8px 22px; border-radius: 8px; border: none; background: var(--teal); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.83rem; font-weight: 600; cursor: pointer; }
+  .btn-save:hover { background: #006771; }
+
+  /* LEGEND */
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; padding: 16px 48px; background: var(--white); border-top: 1px solid var(--gray-200); }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+
+  @media (max-width: 700px) {
+    header, .toolbar, .main, .legend, .month-tabs { padding-left: 16px; padding-right: 16px; }
+    .form-grid { grid-template-columns: 1fr; } .form-full { grid-column: 1; }
+    .cal-cell { min-height: 70px; }
+  }
+  @media print {
+    .toolbar, .month-tabs, .add-btn, .modal-overlay, .detail-overlay { display: none !important; }
+    .main { padding: 12px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <h1>Calendario de <span>Entrevistas</span></h1>
+    <p>Gestión de Relaciones con Medios</p>
+  </div>
+  <div class="header-right">
+    <span class="tag">Betania</span>
+    <span class="tag">UPAEP</span>
+    <span class="tag">CIO</span>
+  </div>
+</header>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <span class="toolbar-label">Medio:</span>
+  <button class="filter-btn active" onclick="filtrar('todos')">Todos</button>
+  <button class="filter-btn" onclick="filtrar('TV')">TV</button>
+  <button class="filter-btn" onclick="filtrar('Radio')">Radio</button>
+  <button class="filter-btn" onclick="filtrar('Periódico Digital')">Periódico Digital</button>
+  <button class="filter-btn" onclick="filtrar('Periódico Impreso')">Periódico Impreso</button>
+  <button class="filter-btn" onclick="filtrar('Revista')">Revista</button>
+  <span class="sep"></span>
+  <span class="toolbar-label">Estatus:</span>
+  <button class="filter-btn" onclick="filtrar('pedido-sin-confirmar')" style="background:#ff00ff;color:#fff;border-color:#ff00ff">Por confirmar</button>
+  <button class="filter-btn" onclick="filtrar('confirmado')" style="background:#00cccc;color:#fff;border-color:#00cccc">Confirmado</button>
+  <button class="filter-btn" onclick="filtrar('no-se-hizo')" style="background:#ff0000;color:#fff;border-color:#ff0000">No se hizo</button>
+  <button class="filter-btn" onclick="filtrar('reagendado')" style="background:#9900ff;color:#fff;border-color:#9900ff">Reagendado</button>
+  <button class="filter-btn" onclick="filtrar('por-realizarse')" style="background:#ff9900;color:#fff;border-color:#ff9900">Por realizarse</button>
+  <button class="filter-btn" onclick="filtrar('falta-testigo')" style="background:#ffee00;color:#665500;border-color:#ffee00">Falta testigo</button>
+  <button class="filter-btn" onclick="filtrar('con-testigo')" style="background:#00cc00;color:#fff;border-color:#00cc00">Ya con testigo</button>
+  <span class="sep"></span>
+  <div class="view-toggle">
+    <button class="view-btn active" id="btn-lista" onclick="setVista('lista')">☰ Lista</button>
+    <button class="view-btn" id="btn-cal" onclick="setVista('calendario')">📅 Calendario</button>
+  </div>
+  <button class="add-btn" onclick="abrirModal()">＋ Nueva entrevista</button>
+</div>
+
+<!-- MONTH TABS -->
+<div class="month-tabs" id="month-tabs"></div>
+
+<!-- MAIN -->
+<div class="main" id="main-content"></div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-item"><span class="medio-badge medio-tv"><span class="dot"></span>TV</span></div>
+  <div class="legend-item"><span class="medio-badge medio-radio"><span class="dot"></span>Radio</span></div>
+  <div class="legend-item"><span class="medio-badge medio-periodico-digital"><span class="dot"></span>Periódico Digital</span></div>
+  <div class="legend-item"><span class="medio-badge medio-periodico-impreso"><span class="dot"></span>Periódico Impreso</span></div>
+  <div class="legend-item"><span class="medio-badge medio-revista"><span class="dot"></span>Revista</span></div>
+  <div class="legend-item" style="margin-left:12px"><span class="status status-pedido-sin-confirmar">Por confirmar</span></div>
+  <div class="legend-item"><span class="status status-confirmado">Confirmado</span></div>
+  <div class="legend-item"><span class="status status-no-se-hizo">No se hizo</span></div>
+  <div class="legend-item"><span class="status status-reagendado">Reagendado</span></div>
+  <div class="legend-item"><span class="status status-por-realizarse">Por realizarse</span></div>
+  <div class="legend-item"><span class="status status-falta-testigo">Falta testigo</span></div>
+  <div class="legend-item"><span class="status status-con-testigo">Ya con testigo</span></div>
+</div>
+
+<!-- MODAL NUEVA/EDITAR -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Nueva Entrevista</h2>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Hospital</label>
+          <select id="f-hospital">
+            <option value="Betania">Betania</option>
+            <option value="UPAEP">UPAEP</option>
+            <option value="CIO">CIO</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Medio</label>
+          <select id="f-tipo-medio">
+            <option value="TV">TV</option>
+            <option value="Radio">Radio</option>
+            <option value="Periódico Digital">Periódico Digital (El Heraldo)</option>
+            <option value="Periódico Impreso">Periódico Impreso (El Heraldo)</option>
+            <option value="Revista">Revista</option>
+          </select>
+        </div>
+        <div class="form-group form-full">
+          <label>Medio de Comunicación</label>
+          <select id="f-medio">
+            <option value="">— Seleccionar —</option>
+            <option value="Imagen">Imagen</option>
+            <option value="Tribuna">Tribuna</option>
+            <option value="Acir">Acir</option>
+            <option value="El Heraldo">El Heraldo</option>
+            <option value="Chic-Multimedios">Chic-Multimedios</option>
+            <option value="TV Azteca">TV Azteca</option>
+          </select>
+        </div>
+        <div class="form-group form-full">
+          <label>Programa / Sección</label>
+          <input type="text" id="f-programa" placeholder="ej. Noticias de la Mañana, Reporte 24…">
+        </div>
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="f-fecha">
+        </div>
+        <div class="form-group">
+          <label>Horario</label>
+          <input type="time" id="f-horario">
+        </div>
+        <div class="form-group form-full">
+          <label>Entrevistado / Doctor</label>
+          <input type="text" id="f-entrevistado" placeholder="Dr. / Dra. Nombre Apellido — Especialidad">
+        </div>
+        <div class="form-group form-full">
+          <label>Tema de la Entrevista</label>
+          <input type="text" id="f-tema" placeholder="ej. Detección temprana de cáncer de mama…">
+        </div>
+        <div class="form-group form-full">
+          <label>Preguntas Clave (una por línea)</label>
+          <textarea id="f-preguntas" placeholder="¿Cuáles son los síntomas más comunes?&#10;¿Qué tratamientos recomienda?&#10;¿Cómo pueden prevenirlo?"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Formato</label>
+          <select id="f-formato">
+            <option value="Presencial">Presencial</option>
+            <option value="Llamada">Llamada</option>
+            <option value="Videollamada">Videollamada</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Estatus</label>
+          <select id="f-estatus">
+            <option value="pedido-sin-confirmar">Por confirmar</option>
+            <option value="confirmado">Confirmado</option>
+            <option value="no-se-hizo">No se hizo</option>
+            <option value="reagendado">Reagendado</option>
+            <option value="por-realizarse">Por realizarse</option>
+            <option value="falta-testigo">Falta testigo</option>
+            <option value="con-testigo">Ya con testigo</option>
+          </select>
+        </div>
+        <div class="form-group form-full">
+          <label>Notas adicionales</label>
+          <input type="text" id="f-notas" placeholder="Contacto del productor, dirección, indicaciones…">
+        </div>
+        <div class="form-group form-full">
+          <label>Comentarios / Indicaciones importantes</label>
+          <textarea id="f-comentario" placeholder="ej. El doctor debe confirmar tema 24hrs antes. Llevar kit de prensa…"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-save" onclick="guardarEntrevista()">Guardar entrevista</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETALLE (vista calendario) -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-card">
+    <div class="detail-top">
+      <h3 id="d-titulo"></h3>
+      <button class="detail-close" onclick="cerrarDetalle()">✕</button>
+    </div>
+    <div class="detail-body" id="d-body"></div>
+    <div class="detail-actions">
+      <button class="detail-edit-btn" id="d-edit-btn">✏️ Editar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────
+let entrevistas = [
+  { id:1, hospital:"Betania", tipoMedio:"TV", medio:"TV Azteca", programa:"Enfoque Informativo", fecha:"2025-06-05", horario:"08:30", entrevistado:"Dra. Patricia Garza — Oncología", tema:"Día Mundial del Cáncer de Mama", preguntas:["¿Cuáles son las señales de alerta del cáncer de mama?","¿A partir de qué edad se recomienda la mastografía?","¿Qué tratamientos están disponibles?"], formato:"Presencial", estatus:"confirmado", notas:"Llegada 30 min antes. Contacto: Lupita Hdz.", comentario:"" },
+  { id:2, hospital:"UPAEP", tipoMedio:"Radio", medio:"Acir", programa:"Buenos Días", fecha:"2025-06-10", horario:"07:15", entrevistado:"Dr. Roberto Cisneros — Cardiología", tema:"Hipertensión y estilos de vida saludable", preguntas:["¿Por qué aumentan los casos de hipertensión en jóvenes?","¿Qué hábitos ayudan a prevenirla?"], formato:"Llamada", estatus:"pedido-sin-confirmar", notas:"Llamada al aire", comentario:"" },
+  { id:3, hospital:"CIO", tipoMedio:"Periódico Impreso", medio:"El Heraldo", programa:"Sección Salud", fecha:"2025-06-12", horario:"11:00", entrevistado:"Dr. Marcos Velázquez — Oncología Pediátrica", tema:"Leucemia infantil: avances en tratamiento", preguntas:["¿Cuáles son los síntomas de leucemia en niños?","¿Qué tan efectivos son los nuevos protocolos?"], formato:"Presencial", estatus:"falta-testigo", notas:"Fotógrafo del periódico asiste.", comentario:"" },
+  { id:4, hospital:"Betania", tipoMedio:"Periódico Digital", medio:"El Heraldo", programa:"Especial Salud Femenina", fecha:"2025-06-18", horario:"10:00", entrevistado:"Dra. Sandra Morales — Ginecología", tema:"Salud reproductiva y menopausia", preguntas:["¿Qué cambios físicos son normales en la menopausia?","¿Existe terapia hormonal segura?"], formato:"Videollamada", estatus:"por-realizarse", notas:"", comentario:"Confirmar plataforma con producción" },
+  { id:5, hospital:"UPAEP", tipoMedio:"Revista", medio:"Chic-Multimedios", programa:"Edición Especial Verano", fecha:"2025-06-25", horario:"14:00", entrevistado:"Dr. Alejandro Treviño — Traumatología", tema:"Lesiones deportivas en verano", preguntas:["¿Qué lesiones son las más comunes en verano?","¿Cómo distinguir un esguince de una fractura?"], formato:"Presencial", estatus:"reagendado", notas:"", comentario:"" }
+];
+
+// Meses de Jun-Dic 2025
+const MESES = [
+  { label: "Junio",      value: "2025-06" },
+  { label: "Julio",      value: "2025-07" },
+  { label: "Agosto",     value: "2025-08" },
+  { label: "Septiembre", value: "2025-09" },
+  { label: "Octubre",    value: "2025-10" },
+  { label: "Noviembre",  value: "2025-11" },
+  { label: "Diciembre",  value: "2025-12" },
+];
+
+let filtroActivo = "todos";
+let mesActivo = "2025-06";
+let vistaActiva = "lista"; // "lista" | "calendario"
+let editandoId = null;
+
+// ── HELPERS ──────────────────────────────────────────────────────────
+function cap(str) { return str.charAt(0).toUpperCase() + str.slice(1); }
+function medioClass(m) {
+  const map = { 'TV':'tv','Radio':'radio','Periódico Digital':'periodico-digital','Periódico Impreso':'periodico-impreso','Revista':'revista' };
+  return map[m] || 'tv';
+}
+function evClass(m) {
+  const map = { 'TV':'ev-tv','Radio':'ev-radio','Periódico Digital':'ev-periodico-digital','Periódico Impreso':'ev-periodico-impreso','Revista':'ev-revista' };
+  return map[m] || 'ev-tv';
+}
+function estatusLabel(s) {
+  const map = { 'pedido-sin-confirmar':'Por confirmar','confirmado':'Confirmado','no-se-hizo':'No se hizo','reagendado':'Reagendado','por-realizarse':'Por realizarse','falta-testigo':'Falta testigo','con-testigo':'Ya con testigo' };
+  return map[s] || s;
+}
+function hospClass(h) {
+  if (h==='Betania') return 'hosp-betania';
+  if (h==='UPAEP')   return 'hosp-upaep';
+  return 'hosp-cio';
+}
+
+// ── FILTRAR DATOS ────────────────────────────────────────────────────
+function getDatos() {
+  let datos = entrevistas.filter(e => e.fecha.startsWith(mesActivo));
+  const medios = ['TV','Radio','Periódico Digital','Periódico Impreso','Revista'];
+  const estatus = ['pedido-sin-confirmar','confirmado','no-se-hizo','reagendado','por-realizarse','falta-testigo','con-testigo'];
+  if (medios.includes(filtroActivo)) datos = datos.filter(e => e.tipoMedio === filtroActivo);
+  else if (estatus.includes(filtroActivo)) datos = datos.filter(e => e.estatus === filtroActivo);
+  return datos;
+}
+
+// ── MONTH TABS ───────────────────────────────────────────────────────
+function renderTabs() {
+  const el = document.getElementById('month-tabs');
+  el.innerHTML = MESES.map(m =>
+    `<div class="month-tab ${m.value===mesActivo?'active':''}" onclick="setMes('${m.value}')">${m.label}</div>`
+  ).join('');
+}
+
+function setMes(m) {
+  mesActivo = m;
+  renderTabs();
+  renderMain();
+}
+
+// ── VISTA TOGGLE ─────────────────────────────────────────────────────
+function setVista(v) {
+  vistaActiva = v;
+  document.getElementById('btn-lista').classList.toggle('active', v==='lista');
+  document.getElementById('btn-cal').classList.toggle('active', v==='calendario');
+  renderMain();
+}
+
+// ── RENDER MAIN ──────────────────────────────────────────────────────
+function renderMain() {
+  if (vistaActiva === 'lista') renderLista();
+  else renderCalendario();
+}
+
+// ── RENDER LISTA ─────────────────────────────────────────────────────
+function renderLista() {
+  const main = document.getElementById('main-content');
+  const datos = getDatos();
+  datos.sort((a,b) => (a.fecha+a.horario).localeCompare(b.fecha+b.horario));
+
+  if (datos.length === 0) {
+    const mesLabel = MESES.find(m=>m.value===mesActivo)?.label || mesActivo;
+    main.innerHTML = `<div style="text-align:center;padding:64px;color:#9ca3af;font-size:0.9rem;">No hay entrevistas para ${mesLabel} con este filtro.</div>`;
+    return;
+  }
+
+  const mesLabel = MESES.find(m=>m.value===mesActivo)?.label || '';
+  let html = `
+  <div class="section-header">
+    <span class="section-title">${mesLabel} ${mesActivo.split('-')[0]}</span>
+    <span class="section-count">${datos.length} entrevista${datos.length!==1?'s':''}</span>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr>
+      <th>Medio</th><th>Programa</th><th>Fecha & Hora</th><th>Hospital</th>
+      <th>Entrevistado</th><th>Tema & Preguntas</th><th>Formato</th>
+      <th>Estatus</th><th>Comentarios</th><th></th>
+    </tr></thead><tbody>`;
+
+  datos.forEach(e => {
+    const d = new Date(e.fecha+'T00:00:00');
+    const fechaStr = d.toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
+    html += `<tr>
+      <td>
+        <span class="medio-badge medio-${medioClass(e.tipoMedio)}"><span class="dot"></span>${e.tipoMedio}</span>
+        <strong style="margin-top:5px">${e.medio}</strong>
+      </td>
+      <td><strong>${e.programa}</strong></td>
+      <td><strong>${fechaStr}</strong><span class="sub">🕐 ${e.horario} hrs</span></td>
+      <td><span class="hosp-tag ${hospClass(e.hospital)}">${e.hospital}</span></td>
+      <td>
+        <strong>${e.entrevistado.split('—')[0].trim()}</strong>
+        <span class="sub">${e.entrevistado.split('—')[1]?.trim()||''}</span>
+      </td>
+      <td>
+        <strong>${e.tema}</strong>
+        <ul class="preguntas-list" style="margin-top:4px">${e.preguntas.map(p=>`<li>${p}</li>`).join('')}</ul>
+        ${e.notas?`<span class="sub" style="margin-top:3px">📌 ${e.notas}</span>`:''}
+      </td>
+      <td><span class="tipo-badge tipo-${e.formato.toLowerCase()}">${e.formato}</span></td>
+      <td><span class="status status-${e.estatus}">${estatusLabel(e.estatus)}</span></td>
+      <td style="min-width:150px;max-width:210px">
+        ${e.comentario
+          ? `<span style="font-size:0.79rem;color:var(--gray-600);line-height:1.45">${e.comentario}</span>`
+          : `<span style="font-size:0.74rem;color:var(--gray-400);font-style:italic">—</span>`}
+      </td>
+      <td>
+        <button onclick="editarEntrevista(${e.id})" style="background:none;border:none;cursor:pointer;font-size:0.88rem;color:#9ca3af" title="Editar">✏️</button>
+        <button onclick="eliminarEntrevista(${e.id})" style="background:none;border:none;cursor:pointer;font-size:0.88rem;color:#9ca3af;margin-left:3px" title="Eliminar">🗑️</button>
+      </td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  main.innerHTML = html;
+}
+
+// ── RENDER CALENDARIO ────────────────────────────────────────────────
+function renderCalendario() {
+  const main = document.getElementById('main-content');
+  const datos = getDatos();
+  const [year, month] = mesActivo.split('-').map(Number);
+  const mesLabel = MESES.find(m=>m.value===mesActivo)?.label || '';
+
+  const firstDay = new Date(year, month-1, 1).getDay(); // 0=Dom
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+
+  // Agrupar por día
+  const byDay = {};
+  datos.forEach(e => {
+    const day = parseInt(e.fecha.split('-')[2]);
+    if (!byDay[day]) byDay[day] = [];
+    byDay[day].push(e);
+  });
+
+  const dows = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  let html = `
+  <div class="section-header">
+    <span class="section-title">${mesLabel} ${year}</span>
+    <span class="section-count">${datos.length} entrevista${datos.length!==1?'s':''}</span>
+  </div>
+  <div class="cal-wrap">
+    <div class="cal-header">${dows.map(d=>`<div class="cal-dow">${d}</div>`).join('')}</div>
+    <div class="cal-grid">`;
+
+  // celdas vacías al inicio
+  for (let i=0; i<firstDay; i++) html += `<div class="cal-cell empty"></div>`;
+
+  for (let day=1; day<=daysInMonth; day++) {
+    const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const events = byDay[day] || [];
+    events.sort((a,b) => a.horario.localeCompare(b.horario));
+
+    html += `<div class="cal-cell ${isToday?'today':''}">
+      <span class="cal-day-num">${day}</span>`;
+
+    events.forEach(e => {
+      html += `<div class="cal-event ${evClass(e.tipoMedio)}" onclick="abrirDetalle(${e.id})">
+        <span class="cal-event-medio">${e.medio}</span>
+        <span class="cal-event-hora"> ${e.horario}</span>
+      </div>`;
+    });
+
+    html += `</div>`;
+  }
+
+  html += `</div></div>`;
+  main.innerHTML = html;
+}
+
+// ── DETALLE ──────────────────────────────────────────────────────────
+function abrirDetalle(id) {
+  const e = entrevistas.find(x=>x.id===id);
+  if (!e) return;
+  const d = new Date(e.fecha+'T00:00:00');
+  const fechaStr = d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  document.getElementById('d-titulo').textContent = e.tema;
+  document.getElementById('d-body').innerHTML = `
+    <div class="detail-row"><span class="detail-label">Medio</span><span class="detail-val"><span class="medio-badge medio-${medioClass(e.tipoMedio)}"><span class="dot"></span>${e.tipoMedio}</span> &nbsp;${e.medio}</span></div>
+    <div class="detail-row"><span class="detail-label">Programa</span><span class="detail-val">${e.programa}</span></div>
+    <div class="detail-row"><span class="detail-label">Fecha</span><span class="detail-val">${cap(fechaStr)}</span></div>
+    <div class="detail-row"><span class="detail-label">Horario</span><span class="detail-val">🕐 ${e.horario} hrs</span></div>
+    <div class="detail-row"><span class="detail-label">Hospital</span><span class="detail-val"><span class="hosp-tag ${hospClass(e.hospital)}">${e.hospital}</span></span></div>
+    <div class="detail-row"><span class="detail-label">Entrevistado</span><span class="detail-val">${e.entrevistado}</span></div>
+    <div class="detail-row"><span class="detail-label">Formato</span><span class="detail-val"><span class="tipo-badge tipo-${e.formato.toLowerCase()}">${e.formato}</span></span></div>
+    <div class="detail-row"><span class="detail-label">Estatus</span><span class="detail-val"><span class="status status-${e.estatus}">${estatusLabel(e.estatus)}</span></span></div>
+    ${e.preguntas.length ? `<div class="detail-row"><span class="detail-label">Preguntas</span><span class="detail-val"><ul class="preguntas-list">${e.preguntas.map(p=>`<li>${p}</li>`).join('')}</ul></span></div>` : ''}
+    ${e.notas ? `<div class="detail-row"><span class="detail-label">Notas</span><span class="detail-val">📌 ${e.notas}</span></div>` : ''}
+    ${e.comentario ? `<div class="detail-row"><span class="detail-label">Comentarios</span><span class="detail-val">${e.comentario}</span></div>` : ''}
+  `;
+  document.getElementById('d-edit-btn').onclick = () => { cerrarDetalle(); editarEntrevista(id); };
+  document.getElementById('detailOverlay').classList.add('open');
+}
+function cerrarDetalle() { document.getElementById('detailOverlay').classList.remove('open'); }
+
+// ── FILTROS ──────────────────────────────────────────────────────────
+function filtrar(tipo) {
+  filtroActivo = tipo;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    const t = b.textContent.trim();
+    b.classList.toggle('active', t==='Todos' ? tipo==='todos' : false);
+  });
+  if (tipo==='todos') document.querySelector('.filter-btn').classList.add('active');
+  renderMain();
+}
+
+// ── MODAL ────────────────────────────────────────────────────────────
+function abrirModal(id=null) {
+  editandoId = id;
+  if (id) {
+    const e = entrevistas.find(x=>x.id===id);
+    document.querySelector('.modal-header h2').textContent = 'Editar Entrevista';
+    document.getElementById('f-hospital').value = e.hospital;
+    document.getElementById('f-tipo-medio').value = e.tipoMedio;
+    document.getElementById('f-medio').value = e.medio;
+    document.getElementById('f-programa').value = e.programa;
+    document.getElementById('f-fecha').value = e.fecha;
+    document.getElementById('f-horario').value = e.horario;
+    document.getElementById('f-entrevistado').value = e.entrevistado;
+    document.getElementById('f-tema').value = e.tema;
+    document.getElementById('f-preguntas').value = e.preguntas.join('\n');
+    document.getElementById('f-formato').value = e.formato;
+    document.getElementById('f-estatus').value = e.estatus;
+    document.getElementById('f-notas').value = e.notas;
+    document.getElementById('f-comentario').value = e.comentario||'';
+  } else {
+    document.querySelector('.modal-header h2').textContent = 'Nueva Entrevista';
+    ['f-programa','f-fecha','f-horario','f-entrevistado','f-tema','f-preguntas','f-notas','f-comentario'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-hospital').value='Betania';
+    document.getElementById('f-tipo-medio').value='TV';
+    document.getElementById('f-medio').value='';
+    document.getElementById('f-formato').value='Presencial';
+    document.getElementById('f-estatus').value='pedido-sin-confirmar';
+    // Preseleccionar el mes activo en la fecha
+    document.getElementById('f-fecha').value = mesActivo+'-01';
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function editarEntrevista(id) { abrirModal(id); }
+function cerrarModal() { document.getElementById('modalOverlay').classList.remove('open'); editandoId=null; }
+
+function guardarEntrevista() {
+  const obj = {
+    hospital: document.getElementById('f-hospital').value,
+    tipoMedio: document.getElementById('f-tipo-medio').value,
+    medio: document.getElementById('f-medio').value||'—',
+    programa: document.getElementById('f-programa').value||'—',
+    fecha: document.getElementById('f-fecha').value||mesActivo+'-01',
+    horario: document.getElementById('f-horario').value||'00:00',
+    entrevistado: document.getElementById('f-entrevistado').value||'—',
+    tema: document.getElementById('f-tema').value||'—',
+    preguntas: document.getElementById('f-preguntas').value.split('\n').filter(l=>l.trim()),
+    formato: document.getElementById('f-formato').value,
+    estatus: document.getElementById('f-estatus').value,
+    notas: document.getElementById('f-notas').value,
+    comentario: document.getElementById('f-comentario').value,
+  };
+  if (editandoId) {
+    const idx = entrevistas.findIndex(e=>e.id===editandoId);
+    entrevistas[idx] = {...obj, id:editandoId};
+    // Navegar al mes de la entrevista editada
+    mesActivo = obj.fecha.substring(0,7);
+  } else {
+    obj.id = Date.now();
+    entrevistas.push(obj);
+    mesActivo = obj.fecha.substring(0,7);
+  }
+  cerrarModal();
+  renderTabs();
+  renderMain();
+}
+
+function eliminarEntrevista(id) {
+  if (confirm('¿Eliminar esta entrevista?')) {
+    entrevistas = entrevistas.filter(e=>e.id!==id);
+    renderMain();
+  }
+}
+
+// cerrar modales al click fuera
+document.getElementById('modalOverlay').addEventListener('click',function(e){ if(e.target===this) cerrarModal(); });
+document.getElementById('detailOverlay').addEventListener('click',function(e){ if(e.target===this) cerrarDetalle(); });
+
+// ── INIT ─────────────────────────────────────────────────────────────
+renderTabs();
+renderMain();
+</script>
+</body>
+</html>
